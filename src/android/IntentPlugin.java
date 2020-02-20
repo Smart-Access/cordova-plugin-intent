@@ -17,6 +17,8 @@ import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.net.Uri;
+import android.nfc.NdefRecord;
+import android.nfc.NdefMessage;
 
 import android.content.ContentResolver;
 import android.content.Context;
@@ -71,6 +73,7 @@ public class IntentPlugin extends CordovaPlugin {
         }
 
         Intent intent = cordova.getActivity().getIntent();
+
         context.sendPluginResult(new PluginResult(PluginResult.Status.OK, getIntentJson(intent)));
         return true;
     }
@@ -206,6 +209,11 @@ public class IntentPlugin extends CordovaPlugin {
                 result.put(key, toJsonValue(bundle.get(key)));
             }
             return result;
+        } else if (value instanceof NdefMessage){
+            final JSONObject result = new JSONObject();
+            final NdefMessage message = (NdefMessage) value;
+            result.put("message",toJsonValue(message.getRecords()[0]));
+            return result;
         } else if (value.getClass().isArray()) {
             final JSONArray result = new JSONArray();
             int length = Array.getLength(value);
@@ -220,7 +228,14 @@ public class IntentPlugin extends CordovaPlugin {
                         || value instanceof Long
                         || value instanceof Double) {
             return value;
-        } else {
+        }else if (value instanceof NdefRecord){
+            final JSONObject result = new JSONObject();
+            final NdefRecord message = (NdefRecord) value;
+            result.put("payload",toJsonValue(message.getPayload()));
+            result.put("id",toJsonValue(message.getId()));
+            result.put("uri",toJsonValue(message.toUri()));
+            return result;
+        }else {
             return String.valueOf(value);
         }
     }
